@@ -1,66 +1,66 @@
-package one.block.eosiojavaandroidkeystoresignatureprovider
+package one.block.arisenjavaandroidkeystoresignatureprovider
 
-import one.block.eosiojava.error.signatureProvider.SignTransactionError
-import one.block.eosiojava.error.utilities.EOSFormatterError
-import one.block.eosiojava.interfaces.ISignatureProvider
-import one.block.eosiojava.models.signatureProvider.EosioTransactionSignatureRequest
-import one.block.eosiojava.models.signatureProvider.EosioTransactionSignatureResponse
-import one.block.eosiojava.utilities.EOSFormatter
-import one.block.eosiojavaandroidkeystoresignatureprovider.errors.ErrorString
-import one.block.eosiojavaandroidkeystoresignatureprovider.errors.ErrorString.Companion.SIGN_TRANSACTION_PREPARE_FOR_SIGNING_GENERIC_ERROR
-import one.block.eosiojavaandroidkeystoresignatureprovider.errors.ErrorString.Companion.SIGN_TRANSACTION_RAW_SIGNATURE_IS_NULL
-import one.block.eosiojavaandroidkeystoresignatureprovider.errors.ErrorString.Companion.SIGN_TRANSACTION_UNABLE_TO_FIND_KEY_TO_SIGN
+import one.block.arisenjava.error.signatureProvider.SignTransactionError
+import one.block.arisenjava.error.utilities.RIXFormatterError
+import one.block.arisenjava.interfaces.ISignatureProvider
+import one.block.arisenjava.models.signatureProvider.ArisenTransactionSignatureRequest
+import one.block.arisenjava.models.signatureProvider.ArisenTransactionSignatureResponse
+import one.block.arisenjava.utilities.RIXFormatter
+import one.block.arisenjavaandroidkeystoresignatureprovider.errors.ErrorString
+import one.block.arisenjavaandroidkeystoresignatureprovider.errors.ErrorString.Companion.SIGN_TRANSACTION_PREPARE_FOR_SIGNING_GENERIC_ERROR
+import one.block.arisenjavaandroidkeystoresignatureprovider.errors.ErrorString.Companion.SIGN_TRANSACTION_RAW_SIGNATURE_IS_NULL
+import one.block.arisenjavaandroidkeystoresignatureprovider.errors.ErrorString.Companion.SIGN_TRANSACTION_UNABLE_TO_FIND_KEY_TO_SIGN
 import org.bouncycastle.util.encoders.Hex
 import java.security.KeyStore
 
 /**
- * EOSIO signature provider for Android KeyStore
+ * ARISEN signature provider for Android KeyStore
  * 
  * This provider only works with the SECP256R1 curve.
  * 
  * When a key gets generated in the Android KeyStore, or imported into it, the key is protected and cannot be read.
  *
- * @property password ProtectionParameter? - the password protection entity for adding, using and removing keys. Its default value is NULL. It is a private field and can only be set by calling [EosioAndroidKeyStoreSignatureProvider.Builder.setPassword]
- * @property loadStoreParameter LoadStoreParameter? - the load KeyStore Parameter to load the KeyStore instance. Its default value is NULL. It is a private field and can only be set by calling [EosioAndroidKeyStoreSignatureProvider.Builder.setLoadStoreParameter]
+ * @property password ProtectionParameter? - the password protection entity for adding, using and removing keys. Its default value is NULL. It is a private field and can only be set by calling [ArisenAndroidKeyStoreSignatureProvider.Builder.setPassword]
+ * @property loadStoreParameter LoadStoreParameter? - the load KeyStore Parameter to load the KeyStore instance. Its default value is NULL. It is a private field and can only be set by calling [ArisenAndroidKeyStoreSignatureProvider.Builder.setLoadStoreParameter]
  */
-class EosioAndroidKeyStoreSignatureProvider private constructor() : ISignatureProvider {
+class ArisenAndroidKeyStoreSignatureProvider private constructor() : ISignatureProvider {
     private var password: KeyStore.ProtectionParameter? = null
     private var loadStoreParameter: KeyStore.LoadStoreParameter? = null
 
-    override fun signTransaction(eosioTransactionSignatureRequest: EosioTransactionSignatureRequest): EosioTransactionSignatureResponse {
-        if (eosioTransactionSignatureRequest.chainId.isNullOrEmpty()) {
+    override fun signTransaction(arisenTransactionSignatureRequest: ArisenTransactionSignatureRequest): ArisenTransactionSignatureResponse {
+        if (arisenTransactionSignatureRequest.chainId.isNullOrEmpty()) {
             throw SignTransactionError(ErrorString.SIGN_TRANS_EMPTY_CHAIN_ID)
         }
 
         // Prepare message to be signed.
         // Getting serializedTransaction and preparing signable transaction
-        val serializedTransaction: String = eosioTransactionSignatureRequest.serializedTransaction
+        val serializedTransaction: String = arisenTransactionSignatureRequest.serializedTransaction
 
         // This is the un-hashed message which is used to recover public key
         val message: ByteArray
 
         try {
             message = Hex.decode(
-                EOSFormatter.prepareSerializedTransactionForSigning(
+                RIXFormatter.prepareSerializedTransactionForSigning(
                     serializedTransaction,
-                    eosioTransactionSignatureRequest.chainId
+                    arisenTransactionSignatureRequest.chainId
                 ).toUpperCase()
             )
-        } catch (eosFormatterError: EOSFormatterError) {
+        } catch (rixFormatterError: RIXFormatterError) {
             throw SignTransactionError(
                 String.format(
                     SIGN_TRANSACTION_PREPARE_FOR_SIGNING_GENERIC_ERROR,
                     serializedTransaction
-                ), eosFormatterError
+                ), rixFormatterError
             )
         }
 
         val aliasKeyPairs: List<Pair<String, String>> =
-            EosioAndroidKeyStoreUtility.getAllAndroidKeyStoreKeysInEOSFormat(
+            ArisenAndroidKeyStoreUtility.getAllAndroidKeyStoreKeysInRIXFormat(
                 password = this.password,
                 loadStoreParameter = this.loadStoreParameter
             )
-        val signingPublicKeys: List<String> = eosioTransactionSignatureRequest.signingPublicKeys
+        val signingPublicKeys: List<String> = arisenTransactionSignatureRequest.signingPublicKeys
         val signatures: MutableList<String> = emptyList<String>().toMutableList()
 
         for (signingPublicKey in signingPublicKeys) {
@@ -78,7 +78,7 @@ class EosioAndroidKeyStoreSignatureProvider private constructor() : ISignaturePr
             }
 
             val rawSignature =
-                EosioAndroidKeyStoreUtility.sign(
+                ArisenAndroidKeyStoreUtility.sign(
                     data = message,
                     alias = keyAlias,
                     password = this.password,
@@ -86,19 +86,19 @@ class EosioAndroidKeyStoreSignatureProvider private constructor() : ISignaturePr
                 )
                     ?: throw SignTransactionError(SIGN_TRANSACTION_RAW_SIGNATURE_IS_NULL)
             signatures.add(
-                EOSFormatter.convertDERSignatureToEOSFormat(
+                RIXFormatter.convertDERSignatureToRIXFormat(
                     rawSignature,
                     message,
-                    EOSFormatter.convertEOSPublicKeyToPEMFormat(signingPublicKey)
+                    RIXFormatter.convertRIXPublicKeyToPEMFormat(signingPublicKey)
                 )
             )
         }
 
-        return EosioTransactionSignatureResponse(serializedTransaction, signatures, null)
+        return ArisenTransactionSignatureResponse(serializedTransaction, signatures, null)
     }
 
     override fun getAvailableKeys(): MutableList<String> {
-        return EosioAndroidKeyStoreUtility.getAllAndroidKeyStoreKeysInEOSFormat(
+        return ArisenAndroidKeyStoreUtility.getAllAndroidKeyStoreKeysInRIXFormat(
             password = this.password,
             loadStoreParameter = this.loadStoreParameter
         )
@@ -112,8 +112,8 @@ class EosioAndroidKeyStoreSignatureProvider private constructor() : ISignaturePr
      */
     class Builder {
 
-        private val androidKeyStoreSignatureProvider: EosioAndroidKeyStoreSignatureProvider =
-            EosioAndroidKeyStoreSignatureProvider()
+        private val androidKeyStoreSignatureProvider: ArisenAndroidKeyStoreSignatureProvider =
+            ArisenAndroidKeyStoreSignatureProvider()
 
         /**
          * Set password protection for adding, using and removing key
@@ -142,7 +142,7 @@ class EosioAndroidKeyStoreSignatureProvider private constructor() : ISignaturePr
          *
          * @return AndroidKeyStoreSignatureProvider
          */
-        fun build(): EosioAndroidKeyStoreSignatureProvider {
+        fun build(): ArisenAndroidKeyStoreSignatureProvider {
             return this.androidKeyStoreSignatureProvider
         }
     }

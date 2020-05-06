@@ -1,11 +1,11 @@
-package one.block.eosiojavaandroidkeystoresignatureprovider.errors
+package one.block.arisenjavaandroidkeystoresignatureprovider.errors
 
-import one.block.eosiojava.error.signatureProvider.GetAvailableKeysError
+import one.block.arisenjava.error.signatureProvider.GetAvailableKeysError
 import org.jetbrains.annotations.NotNull
 import java.lang.Exception
 
 /**
- * Error class that will be thrown from [one.block.eosiojavaandroidkeystoresignatureprovider.EosioAndroidKeyStoreUtility.getAllAndroidKeyStoreKeysInEOSFormat]
+ * Error class that will be thrown from [one.block.arisenjavaandroidkeystoresignatureprovider.ArisenAndroidKeyStoreUtility.getAllAndroidKeyStoreKeysInRIXFormat]
  */
 class QueryAndroidKeyStoreError : GetAvailableKeysError {
     constructor() : super()

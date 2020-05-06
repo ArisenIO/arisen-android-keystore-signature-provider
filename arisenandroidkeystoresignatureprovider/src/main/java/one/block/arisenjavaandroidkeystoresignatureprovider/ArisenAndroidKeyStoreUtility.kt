@@ -1,15 +1,15 @@
-package one.block.eosiojavaandroidkeystoresignatureprovider
+package one.block.arisenjavaandroidkeystoresignatureprovider
 
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
-import one.block.eosiojava.utilities.EOSFormatter
-import one.block.eosiojavaandroidkeystoresignatureprovider.errors.*
-import one.block.eosiojavaandroidkeystoresignatureprovider.errors.ErrorString.Companion.CONVERT_EC_TO_EOS_INVALID_INPUT_KEY
-import one.block.eosiojavaandroidkeystoresignatureprovider.errors.ErrorString.Companion.DELETE_KEY_KEYSTORE_GENERIC_ERROR
-import one.block.eosiojavaandroidkeystoresignatureprovider.errors.ErrorString.Companion.GENERATE_KEY_ECGEN_MUST_USE_SECP256R1
-import one.block.eosiojavaandroidkeystoresignatureprovider.errors.ErrorString.Companion.GENERATE_KEY_KEYGENSPEC_MUST_USE_EC
-import one.block.eosiojavaandroidkeystoresignatureprovider.errors.ErrorString.Companion.GENERATE_KEY_MUST_HAS_PURPOSE_SIGN
-import one.block.eosiojavaandroidkeystoresignatureprovider.errors.ErrorString.Companion.QUERY_ANDROID_KEYSTORE_GENERIC_ERROR
+import one.block.arisenjava.utilities.RIXFormatter
+import one.block.arisenjavaandroidkeystoresignatureprovider.errors.*
+import one.block.arisenjavaandroidkeystoresignatureprovider.errors.ErrorString.Companion.CONVERT_EC_TO_RIX_INVALID_INPUT_KEY
+import one.block.arisenjavaandroidkeystoresignatureprovider.errors.ErrorString.Companion.DELETE_KEY_KEYSTORE_GENERIC_ERROR
+import one.block.arisenjavaandroidkeystoresignatureprovider.errors.ErrorString.Companion.GENERATE_KEY_ECGEN_MUST_USE_SECP256R1
+import one.block.arisenjavaandroidkeystoresignatureprovider.errors.ErrorString.Companion.GENERATE_KEY_KEYGENSPEC_MUST_USE_EC
+import one.block.arisenjavaandroidkeystoresignatureprovider.errors.ErrorString.Companion.GENERATE_KEY_MUST_HAS_PURPOSE_SIGN
+import one.block.arisenjavaandroidkeystoresignatureprovider.errors.ErrorString.Companion.QUERY_ANDROID_KEYSTORE_GENERIC_ERROR
 import org.bouncycastle.asn1.ASN1Encodable
 import org.bouncycastle.asn1.ASN1InputStream
 import org.bouncycastle.asn1.ASN1Sequence
@@ -27,7 +27,7 @@ import java.util.*
 /**
  * Utility class provides cryptographic methods to manage keys in the Android KeyStore Signature Provider and uses the keys to sign transactions.
  */
-class EosioAndroidKeyStoreUtility {
+class ArisenAndroidKeyStoreUtility {
 
     companion object {
         private const val ANDROID_PUBLIC_KEY_OID_ID: Int = 0
@@ -39,10 +39,10 @@ class EosioAndroidKeyStoreUtility {
         private const val PEM_OBJECT_TYPE_PUBLIC_KEY = "PUBLIC KEY"
 
         /**
-         * Generate a new key inside Android KeyStore by the given [keyGenParameterSpec] and return the new key in EOS format
+         * Generate a new key inside Android KeyStore by the given [keyGenParameterSpec] and return the new key in RIX format
          * 
          * The given [keyGenParameterSpec] is the parameter specification to generate a new key. This specification
-         * must include the following information if the key to be generated needs to be EOS Mainnet compliant:
+         * must include the following information if the key to be generated needs to be RIX Mainnet compliant:
          *
          * - [KeyGenParameterSpec] must include [KeyProperties.PURPOSE_SIGN]
          * - [KeyGenParameterSpec.getAlgorithmParameterSpec] must be of type [ECGenParameterSpec]
@@ -71,13 +71,13 @@ class EosioAndroidKeyStoreUtility {
             kpg.initialize(keyGenParameterSpec)
 
             val newKeyPair: KeyPair = kpg.generateKeyPair()
-            return convertAndroidKeyStorePublicKeyToEOSFormat(
+            return convertAndroidKeyStorePublicKeyToRIXFormat(
                 androidECPublicKey = newKeyPair.public as ECPublicKey
             )
         }
 
         /**
-         * Generate a new key inside AndroidKeyStore by the given [alias] and return the new key in EOS format
+         * Generate a new key inside AndroidKeyStore by the given [alias] and return the new key in RIX format
          *
          * The given [alias] is the identity of the key. The new key will be generated with the Default [KeyGenParameterSpec] from the [generateDefaultKeyGenParameterSpecBuilder]
          */
@@ -90,12 +90,12 @@ class EosioAndroidKeyStoreUtility {
         }
 
         /**
-         * Convert an ECPublic Key (SECP256R1) that resides in the Android KeyStore to EOS format
+         * Convert an ECPublic Key (SECP256R1) that resides in the Android KeyStore to RIX format
          * @param androidECPublicKey ECPublicKey - the ECPublic Key (SECP256R1) to convert
-         * @return String - EOS format of the provided key
+         * @return String - RIX format of the provided key
          */
         @JvmStatic
-        private fun convertAndroidKeyStorePublicKeyToEOSFormat(androidECPublicKey: ECPublicKey): String {
+        private fun convertAndroidKeyStorePublicKeyToRIXFormat(androidECPublicKey: ECPublicKey): String {
             // Read the key information using the supported ASN.1 standard.
             val bIn: ASN1InputStream = ASN1InputStream(ByteArrayInputStream(androidECPublicKey.encoded))
             val asn1Sequence: ASN1Sequence = (bIn.readObject()).toASN1Primitive() as ASN1Sequence
@@ -106,7 +106,7 @@ class EosioAndroidKeyStoreUtility {
             if (X9ObjectIdentifiers.id_ecPublicKey.id != publicKeyOID[EC_PUBLICKEY_OID_INDEX].toString()
                 || X9ObjectIdentifiers.prime256v1.id != publicKeyOID[SECP256R1_OID_INDEX].toString()
             ) {
-                throw PublicKeyConversionError(CONVERT_EC_TO_EOS_INVALID_INPUT_KEY)
+                throw PublicKeyConversionError(CONVERT_EC_TO_RIX_INVALID_INPUT_KEY)
             }
 
             val stringWriter: StringWriter = StringWriter()
@@ -117,18 +117,18 @@ class EosioAndroidKeyStoreUtility {
 
             val pemFormattedPublicKey: String = stringWriter.toString()
 
-            return EOSFormatter.convertPEMFormattedPublicKeyToEOSFormat(pemFormattedPublicKey, false)
+            return RIXFormatter.convertPEMFormattedPublicKeyToRIXFormat(pemFormattedPublicKey, false)
         }
 
         /**
-         * Get all (SECP256R1) curve keys in EOS format from Android KeyStore
+         * Get all (SECP256R1) curve keys in RIX format from Android KeyStore
          * @param password KeyStore.ProtectionParameter? - the password to load all the keys
          * @param loadStoreParameter KeyStore.LoadStoreParameter? - the KeyStore Parameter to load the KeyStore instance
          *
-         * @return List<String> - List of SECP256R1 keys inside Android KeyStore (EOS Format)
+         * @return List<String> - List of SECP256R1 keys inside Android KeyStore (RIX Format)
          */
         @JvmStatic
-        fun getAllAndroidKeyStoreKeysInEOSFormat(
+        fun getAllAndroidKeyStoreKeysInRIXFormat(
             password: KeyStore.ProtectionParameter?,
             loadStoreParameter: KeyStore.LoadStoreParameter?
         ): List<Pair<String, String>> {
@@ -146,7 +146,7 @@ class EosioAndroidKeyStoreUtility {
                     aliasKeyPair.add(
                         Pair(
                             alias,
-                            this.convertAndroidKeyStorePublicKeyToEOSFormat(androidECPublicKey = ecPublicKey)
+                            this.convertAndroidKeyStorePublicKeyToRIXFormat(androidECPublicKey = ecPublicKey)
                         )
                     )
                 }
@@ -156,7 +156,7 @@ class EosioAndroidKeyStoreUtility {
         }
 
         /**
-         * Get all (SECP256R1) keys in EOS format from Android KeyStore
+         * Get all (SECP256R1) keys in RIX format from Android KeyStore
          * @param alias String - the key's identity
          * @param password KeyStore.ProtectionParameter? - the password to load all the keys
          * @param loadStoreParameter KeyStore.LoadStoreParameter? - the KeyStore Parameter to load the KeyStore instance
@@ -164,7 +164,7 @@ class EosioAndroidKeyStoreUtility {
          */
         @Throws(QueryAndroidKeyStoreError::class)
         @JvmStatic
-        fun getAndroidKeyStoreKeyInEOSFormat(
+        fun getAndroidKeyStoreKeyInRIXFormat(
             alias: String,
             password: KeyStore.ProtectionParameter?,
             loadStoreParameter: KeyStore.LoadStoreParameter?
@@ -176,7 +176,7 @@ class EosioAndroidKeyStoreUtility {
                     X509EncodedKeySpec(keyEntry.certificate.publicKey.encoded)
                 ) as ECPublicKey
 
-                return this.convertAndroidKeyStorePublicKeyToEOSFormat(ecPublicKey)
+                return this.convertAndroidKeyStorePublicKeyToRIXFormat(ecPublicKey)
             } catch (ex: Exception) {
                 throw QueryAndroidKeyStoreError(QUERY_ANDROID_KEYSTORE_GENERIC_ERROR, ex)
             }

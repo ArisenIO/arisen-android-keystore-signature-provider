@@ -1,4 +1,4 @@
-package one.block.eosiojavaandroidkeystoresignatureprovider.errors
+package one.block.arisenjavaandroidkeystoresignatureprovider.errors
 
 class InvalidKeyGenParameter : Exception {
     constructor() : super()
